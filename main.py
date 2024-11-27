@@ -9,6 +9,9 @@ from app.routers.auth import router as auth_router
 from app.routers.customer import router as customer_router
 from typing import AsyncGenerator
 from fastapi.openapi.utils import get_openapi
+from app.initializers.populate_roles import populate_roles
+from typing import AsyncGenerator
+from app.db.database import get_async_session
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -19,6 +22,13 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
     logger.info("Tabelas criadas com sucesso.")
+
+    session_generator = get_async_session()
+    session = await session_generator.__anext__()
+    try:
+        await populate_roles(session)
+    finally:
+        await session_generator.aclose()
 
     yield
 
