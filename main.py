@@ -1,0 +1,63 @@
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+from fastapi.security import OAuth2PasswordBearer
+from fastapi.openapi.models import SecuritySchemeType
+from app.db.database import engine
+from app.models.base import Base
+import logging
+from app.routers.auth import router as auth_router
+from app.routers.customer import router as customer_router
+from typing import AsyncGenerator
+from fastapi.openapi.utils import get_openapi
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
+async def lifespan(app: FastAPI) -> AsyncGenerator:
+    logging.basicConfig(level=logging.INFO)
+    logger = logging.getLogger(__name__)
+
+    async with engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+    logger.info("Tabelas criadas com sucesso.")
+
+    yield
+
+    await engine.dispose()
+    logger.info("Conexão com o banco de dados foi fechada.")
+
+app = FastAPI(lifespan=lifespan)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
+app.include_router(auth_router, prefix="/auth", tags=["Autenticação"])
+app.include_router(customer_router, prefix="/customers", tags=["Clientes"])
+
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="IBGPT Backend",
+        version="1.0.0",
+        description="Descrição da API com autenticação JWT",
+        routes=app.routes,
+    )
+    openapi_schema["components"]["securitySchemes"] = {
+        "BearerAuth": {
+            "type": SecuritySchemeType.http.value,
+            "scheme": "bearer",
+            "bearerFormat": "JWT",
+        }
+    }
+    for path in openapi_schema["paths"]:
+        for method in openapi_schema["paths"][path]:
+            openapi_schema["paths"][path][method]["security"] = [{"BearerAuth": []}]
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+app.openapi = custom_openapi
