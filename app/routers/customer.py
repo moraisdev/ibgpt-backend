@@ -21,13 +21,7 @@ async def create_customer(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        return await create_customer_service(session, customer, current_user.id)
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Erro ao criar o cliente: {str(e)}",
-        )
+    return await create_customer_service(session, customer, current_user.id)
 
 
 @router.get("/", response_model=list[CustomerResponse])
@@ -44,13 +38,7 @@ async def get_customer_by_id(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user),
 ):
-    customer = await get_customer_by_id_service(session, customer_id, current_user.id)
-    if not customer:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Cliente não encontrado ou não pertence ao usuário.",
-        )
-    return customer
+    return await get_customer_by_id_service(session, customer_id, current_user.id)
 
 
 @router.put("/{customer_id}", response_model=CustomerResponse)
@@ -60,17 +48,9 @@ async def update_customer(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        return await update_customer_service(
-            session, customer_id, customer, current_user.id
-        )
-    except HTTPException as e:
-        raise e
-    except Exception as e:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Erro ao atualizar o cliente: {str(e)}",
-        )
+    return await update_customer_service(
+        session, customer_id, customer, current_user.id
+    )
 
 
 @router.delete("/{customer_id}", status_code=status.HTTP_204_NO_CONTENT)
@@ -79,7 +59,4 @@ async def delete_customer(
     session: AsyncSession = Depends(get_async_session),
     current_user: User = Depends(get_current_user),
 ):
-    try:
-        await delete_customer_service(session, customer_id, current_user.id)
-    except HTTPException as e:
-        raise e
+    await delete_customer_service(session, customer_id, current_user.id)

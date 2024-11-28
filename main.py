@@ -5,13 +5,15 @@ from fastapi.openapi.models import SecuritySchemeType
 from app.db.database import engine
 from app.models.base import Base
 import logging
-from app.routers.auth import router as auth_router
-from app.routers.customer import router as customer_router
 from typing import AsyncGenerator
 from fastapi.openapi.utils import get_openapi
 from app.initializers.populate_roles import populate_roles
 from typing import AsyncGenerator
 from app.db.database import get_async_session
+
+from app.routers.location import router as location_router
+from app.routers.auth import router as auth_router
+from app.routers.customer import router as customer_router
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -45,9 +47,6 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(auth_router, prefix="/auth", tags=["Autenticação"])
-app.include_router(customer_router, prefix="/customers", tags=["Clientes"])
-
 def custom_openapi():
     if app.openapi_schema:
         return app.openapi_schema
@@ -71,3 +70,7 @@ def custom_openapi():
     return app.openapi_schema
 
 app.openapi = custom_openapi
+
+app.include_router(auth_router, prefix="/auth", tags=["Autenticação"])
+app.include_router(customer_router, prefix="/customers", tags=["Clientes"])
+app.include_router(location_router, prefix="/location", tags=["Localidade"])

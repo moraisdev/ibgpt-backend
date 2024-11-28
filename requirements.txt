@@ -125,3 +125,4 @@ zipp==3.21.0
 psycopg2-binary
 python-multipart
 pydantic[email]
+pycountry
