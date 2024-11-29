@@ -14,8 +14,10 @@ from app.db.database import get_async_session
 from app.routers.location import router as location_router
 from app.routers.auth import router as auth_router
 from app.routers.customer import router as customer_router
+from app.routers.user import router as user_router
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
+
 
 async def lifespan(app: FastAPI) -> AsyncGenerator:
     logging.basicConfig(level=logging.INFO)
@@ -37,6 +39,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
     await engine.dispose()
     logger.info("Conexão com o banco de dados foi fechada.")
 
+
 app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
@@ -46,6 +49,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 def custom_openapi():
     if app.openapi_schema:
@@ -69,8 +73,10 @@ def custom_openapi():
     app.openapi_schema = openapi_schema
     return app.openapi_schema
 
+
 app.openapi = custom_openapi
 
 app.include_router(auth_router, prefix="/auth", tags=["Autenticação"])
 app.include_router(customer_router, prefix="/customers", tags=["Clientes"])
 app.include_router(location_router, prefix="/location", tags=["Localidade"])
+app.include_router(user_router, prefix="/users", tags=["Usuarios"])

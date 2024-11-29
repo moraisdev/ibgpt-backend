@@ -10,6 +10,13 @@ from app.services.auth import (
 from app.schemas.auth import UserCreate, UserResponse, TokenResponse, LoginForm
 from app.config.config import settings
 from datetime import timedelta
+from app.repositories.auth import update_password
+from app.services.auth import get_current_user
+from passlib.context import CryptContext
+from app.models.user import User
+from app.schemas.auth import ResetPasswordForm
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 router = APIRouter()
 
@@ -60,3 +67,20 @@ async def login_for_access_token(
 @router.post("/refresh", response_model=TokenResponse)
 async def refresh_access_token_endpoint(refresh_token: str):
     return await refresh_access_token_service(refresh_token)
+
+
+@router.post("/reset-password")
+async def reset_password(
+    form_data: ResetPasswordForm,
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    if not pwd_context.verify(form_data.current_password, current_user.password):
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Senha atual incorreta.",
+        )
+
+    await update_password(session, current_user, form_data.new_password)
+
+    return {"message": "Senha atualizada com sucesso."}

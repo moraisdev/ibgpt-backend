@@ -2,6 +2,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models.user import User
 from sqlalchemy.orm import selectinload
+from passlib.context import CryptContext
+
+pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
 
 async def get_user_by_email(session: AsyncSession, email: str) -> User | None:
@@ -29,3 +32,11 @@ async def get_user_by_id_with_role(session: AsyncSession, user_id: int) -> User 
         select(User).options(selectinload(User.role)).where(User.id == user_id)
     )
     return result.scalars().first()
+
+
+async def update_password(session: AsyncSession, user: User, new_password: str) -> None:
+    hashed_password = pwd_context.hash(new_password)
+    user.password = hashed_password
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)

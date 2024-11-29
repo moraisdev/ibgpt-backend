@@ -1,5 +1,5 @@
 from pydantic import BaseModel, EmailStr
-
+from datetime import datetime
 
 class UserCreate(BaseModel):
     name: str
@@ -31,6 +31,8 @@ class UserResponse(BaseModel):
     job_title: str
     role: RoleResponse
     is_active: bool
+    created_at: datetime
+    updated_at: datetime
 
     class Config:
         orm_mode = True
@@ -44,3 +46,8 @@ class TokenResponse(BaseModel):
 class LoginForm(BaseModel):
     email: EmailStr
     password: str
+
+
+class ResetPasswordForm(BaseModel):
+    current_password: str
+    new_password: str
