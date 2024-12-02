@@ -16,6 +16,8 @@ from app.services.extract_documents import extract_documents
 from app.services.openai import prepare_prompt, use_fine_tuned_model
 from sqlalchemy import delete
 import json
+from app.utils.generate_pdf_offer import render_offer_to_html
+from weasyprint import HTML
 
 
 async def create_or_update_offer_service(session: AsyncSession, offer_data: dict):
@@ -120,6 +122,7 @@ async def generate_ia_response_service(session: AsyncSession, offer_id: int) -> 
     offer.accuracy_ia = result_data.get("accuracy_ia")
     offer.periodicity = result_data.get("periodicity")
     offer.calculated_value = result_data.get("calculated_value")
+    offer.status = "processado"
 
     await session.execute(
         delete(InssSynthesizedCalculation).where(
@@ -152,3 +155,20 @@ async def generate_ia_response_service(session: AsyncSession, offer_id: int) -> 
     }
 
     return response_data
+
+
+async def generate_pdf_service(offer_id: int, session: AsyncSession) -> str:
+    offer = await get_offer_with_relations(session, offer_id)
+    if not offer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Oferta não encontrada.",
+        )
+
+    html_content = render_offer_to_html(offer)
+
+    file_path = f"/tmp/relatorio_{offer_id}.pdf"
+
+    HTML(string=html_content).write_pdf(file_path)
+
+    return file_path

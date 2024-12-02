@@ -1,5 +1,6 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List, Dict
+from datetime import datetime
 
 
 class InssSynthesizedCalculation(BaseModel):
@@ -93,9 +94,9 @@ class OfferResponse(BaseModel):
     commission: Optional[float]
     liquidation_value: Optional[float]
     observations: Optional[str]
-    result_openai: Optional[str]
-    documents: Optional[List[OfferDocumentResponse]] = []
     calculations: Optional[List[InssSynthesizedCalculationResponse]] = []
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     class Config:
         orm_mode = True

@@ -7,9 +7,11 @@ from app.services.offer import (
     get_offer_resume_service,
     add_documents_to_offer_service,
     generate_ia_response_service,
+    generate_pdf_service,
 )
 from app.schemas.offer import OfferCreate, OfferResponse, OfferUpdate, FineTuneResponse
 from typing import List
+from fastapi.responses import FileResponse
 
 router = APIRouter()
 
@@ -111,3 +113,27 @@ async def get_offer_and_use_fine_tune(
         raise HTTPException(status_code=400, detail=str(e))
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Erro interno: {e}")
+
+
+@router.get(
+    "/generate-pdf/{offer_id}",
+    response_class=FileResponse,
+    status_code=status.HTTP_200_OK,
+)
+async def generate_pdf(
+    offer_id: int, session: AsyncSession = Depends(get_async_session)
+):
+    try:
+        file_path = await generate_pdf_service(offer_id, session)
+        return FileResponse(
+            file_path,
+            filename=f"relatorio_{offer_id}.pdf",
+            media_type="application/pdf",
+        )
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao gerar o PDF: {str(e)}",
+        )

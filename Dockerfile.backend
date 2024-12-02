@@ -2,10 +2,23 @@ FROM python:3.10-slim
 
 WORKDIR /app
 
-# Instalar dependências do sistema necessárias para psycopg2
+# Instalar dependências do sistema necessárias para WeasyPrint e psycopg2
 RUN apt-get update && apt-get install -y \
     build-essential \
     libpq-dev \
+    libgdk-pixbuf2.0-0 \
+    libgdk-pixbuf2.0-dev \
+    libffi-dev \
+    libpango1.0-0 \
+    libcairo2 \
+    libcairo2-dev \
+    libgirepository1.0-dev \
+    libpangocairo-1.0-0 \
+    fonts-liberation \
+    libxml2 \
+    libxml2-dev \
+    libxslt1-dev \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Copiar e instalar dependências Python

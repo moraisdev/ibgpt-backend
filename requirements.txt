@@ -128,3 +128,5 @@ pydantic[email]
 pycountry
 pdfplumber
 tabulate
+weasyprint
+jinja2

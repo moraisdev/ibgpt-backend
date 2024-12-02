@@ -2,6 +2,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models.offer import Offer
 from sqlalchemy.orm import joinedload, selectinload
+from sqlalchemy.orm import subqueryload
 
 
 async def save_offer(session: AsyncSession, offer: Offer) -> Offer:
@@ -27,8 +28,8 @@ async def get_offer_with_relations(session: AsyncSession, offer_id: int) -> Offe
     result = await session.execute(
         select(Offer)
         .options(
-            joinedload(Offer.documents),
-            joinedload(Offer.calculations),
+            selectinload(Offer.customer),
+            selectinload(Offer.calculations),
         )
         .where(Offer.id == offer_id)
     )
