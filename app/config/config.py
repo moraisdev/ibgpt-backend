@@ -17,6 +17,7 @@ class Settings(BaseSettings):
     POSTGRES_USER: str = Field(..., env="postgres_user")
     POSTGRES_PASSWORD: str = Field(..., env="postgres_password")
     POSTGRES_DB: str = Field(..., env="postgres_db")
+    FINE_TUNE_MODEL: str = Field(..., env="fine_tune_model")
 
     class Config:
         env_file = ".env"

@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, func, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, text, ForeignKey
 from sqlalchemy.orm import relationship
 from app.models.base import Base
 
@@ -32,16 +32,17 @@ class Customer(Base):
     company_address_zip_code = Column(String(20), nullable=False)
     is_active = Column(Boolean, nullable=True, default=True)
     created_at = Column(
-        TIMESTAMP(timezone=True), server_default=func.now(), nullable=False
+        TIMESTAMP(timezone=True),
+        server_default=text("timezone('America/Sao_Paulo', now())"),
+        nullable=False,
     )
     updated_at = Column(
         TIMESTAMP(timezone=True),
-        server_default=func.now(),
-        onupdate=func.now(),
+        server_default=text("timezone('America/Sao_Paulo', now())"),
+        onupdate=text("timezone('America/Sao_Paulo', now())"),
         nullable=False,
     )
     deleted_at = Column(TIMESTAMP(timezone=True), nullable=True)
 
     user = relationship("User", back_populates="customers")
-
     offers = relationship("Offer", back_populates="customer")

@@ -33,13 +33,14 @@ class User(Base):
 
     is_active = Column(Boolean, nullable=True, default=True)
     created_at = Column(
-        TIMESTAMP(timezone=True), nullable=False, server_default=func.now()
+        TIMESTAMP(timezone=True),
+        server_default=text("timezone('America/Sao_Paulo', now())"),
+        nullable=False,
     )
     updated_at = Column(
         TIMESTAMP(timezone=True),
+        server_default=text("timezone('America/Sao_Paulo', now())"),
+        onupdate=text("timezone('America/Sao_Paulo', now())"),
         nullable=False,
-        server_default=func.now(),
-        onupdate=func.now(),
     )
-
     customers = relationship("Customer", back_populates="user")
