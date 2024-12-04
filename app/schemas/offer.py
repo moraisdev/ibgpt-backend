@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict
 from typing import Optional, List, Dict
 from datetime import datetime
-
+from app.schemas.customer import CustomerResponse
 
 class InssSynthesizedCalculation(BaseModel):
     description: str
@@ -95,6 +95,7 @@ class OfferResponse(BaseModel):
     liquidation_value: Optional[float]
     observations: Optional[str]
     calculations: Optional[List[InssSynthesizedCalculationResponse]] = []
+    customer: Optional[CustomerResponse] = None
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
 

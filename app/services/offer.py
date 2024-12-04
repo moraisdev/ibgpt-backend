@@ -4,6 +4,7 @@ from app.repositories.offer import (
     get_offer_by_id,
     get_offer_with_relations,
     get_offer_with_documents,
+    get_offers_by_user_id
 )
 from typing import List
 from fastapi import UploadFile
@@ -18,7 +19,7 @@ from sqlalchemy import delete
 import json
 from app.utils.generate_pdf_offer import render_offer_to_html
 from weasyprint import HTML
-
+from app.schemas.offer import OfferResponse
 
 async def create_or_update_offer_service(session: AsyncSession, offer_data: dict):
 
@@ -122,7 +123,7 @@ async def generate_ia_response_service(session: AsyncSession, offer_id: int) -> 
     offer.accuracy_ia = result_data.get("accuracy_ia")
     offer.periodicity = result_data.get("periodicity")
     offer.calculated_value = result_data.get("calculated_value")
-    offer.status = "processado"
+    offer.status = "processada"
 
     await session.execute(
         delete(InssSynthesizedCalculation).where(
@@ -172,3 +173,7 @@ async def generate_pdf_service(offer_id: int, session: AsyncSession) -> str:
     HTML(string=html_content).write_pdf(file_path)
 
     return file_path
+
+async def get_all_offers_service(session: AsyncSession, user_id: int) -> List[OfferResponse]:
+    offers = await get_offers_by_user_id(session, user_id)
+    return offers

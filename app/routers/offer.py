@@ -8,10 +8,13 @@ from app.services.offer import (
     add_documents_to_offer_service,
     generate_ia_response_service,
     generate_pdf_service,
+    get_all_offers_service
 )
 from app.schemas.offer import OfferCreate, OfferResponse, OfferUpdate, FineTuneResponse
 from typing import List
 from fastapi.responses import FileResponse
+from app.models.user import User
+from app.services.auth import get_current_user
 
 router = APIRouter()
 
@@ -136,4 +139,23 @@ async def generate_pdf(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao gerar o PDF: {str(e)}",
+        )
+
+@router.get(
+    "/",
+    response_model=List[OfferResponse],
+    status_code=status.HTTP_200_OK,
+    summary="Obter todas as ofertas do usuário autenticado",
+)
+async def get_all_offers(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        offers = await get_all_offers_service(session, current_user.id)
+        return offers
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar as ofertas: {str(e)}",
         )

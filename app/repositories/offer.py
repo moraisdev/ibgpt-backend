@@ -1,9 +1,9 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models.offer import Offer
-from sqlalchemy.orm import joinedload, selectinload
-from sqlalchemy.orm import subqueryload
-
+from sqlalchemy.orm import selectinload
+from typing import List
+from app.schemas.offer import OfferResponse
 
 async def save_offer(session: AsyncSession, offer: Offer) -> Offer:
     if not session.in_transaction():
@@ -55,3 +55,18 @@ async def get_offer_with_documents(session: AsyncSession, offer_id: int) -> Offe
         .where(Offer.id == offer_id)
     )
     return result.scalars().one_or_none()
+
+
+async def get_offers_by_user_id(session: AsyncSession, user_id: int) -> List[OfferResponse]:
+    result = await session.execute(
+        select(Offer)
+        .join(Offer.customer)
+        .options(
+            selectinload(Offer.customer),
+            selectinload(Offer.calculations),
+            selectinload(Offer.documents),
+        )
+        .where(Offer.customer.has(user_id=user_id))
+    )
+    offers = result.scalars().all()
+    return offers
