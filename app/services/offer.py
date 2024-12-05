@@ -4,14 +4,22 @@ from app.repositories.offer import (
     get_offer_by_id,
     get_offer_with_relations,
     get_offer_with_documents,
-    get_offers_by_user_id
+    get_offers_by_user_id,
+    delete_calculations_by_offer_id,
+    save_calculation,
+    get_dashboard_summary_repository,
+    get_monthly_dashboard_data_repository,
+    get_recovered_and_pending_repository,
 )
 from typing import List
 from fastapi import UploadFile
 from app.models.offer import Offer
 from app.models.offer_document import OfferDocument
 from app.models.calculations import InssSynthesizedCalculation
-from app.schemas.offer import InssSynthesizedCalculationResponse
+from app.schemas.offer import (
+    InssSynthesizedCalculationResponse,
+    InssSynthesizedCalculationUpdate,
+)
 from fastapi import HTTPException, status
 from app.services.extract_documents import extract_documents
 from app.services.openai import prepare_prompt, use_fine_tuned_model
@@ -20,6 +28,7 @@ import json
 from app.utils.generate_pdf_offer import render_offer_to_html
 from weasyprint import HTML
 from app.schemas.offer import OfferResponse
+
 
 async def create_or_update_offer_service(session: AsyncSession, offer_data: dict):
 
@@ -39,8 +48,7 @@ async def update_offer_service(session: AsyncSession, offer_id: int, offer_data:
         )
 
     for key, value in offer_data.items():
-        if value is not None:
-            setattr(offer, key, value)
+        setattr(offer, key, value)
 
     return await save_offer(session, offer)
 
@@ -174,6 +182,111 @@ async def generate_pdf_service(offer_id: int, session: AsyncSession) -> str:
 
     return file_path
 
-async def get_all_offers_service(session: AsyncSession, user_id: int) -> List[OfferResponse]:
+
+async def get_all_offers_service(
+    session: AsyncSession, user_id: int
+) -> List[OfferResponse]:
     offers = await get_offers_by_user_id(session, user_id)
     return offers
+
+
+async def update_calculations_service(
+    session: AsyncSession,
+    offer_id: int,
+    calculations: List[InssSynthesizedCalculationUpdate],
+) -> List[InssSynthesizedCalculationResponse]:
+
+    offer = await get_offer_with_relations(session, offer_id)
+    if not offer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Oferta não encontrada.",
+        )
+
+    await delete_calculations_by_offer_id(session, offer_id)
+
+    updated_calculations = []
+    for calc in calculations:
+        new_calculation = await save_calculation(
+            session,
+            offer_id=offer_id,
+            description=calc.description,
+            values=calc.values,
+        )
+        updated_calculations.append(
+            InssSynthesizedCalculationResponse(
+                id=new_calculation.id,
+                description=new_calculation.description,
+                values=new_calculation.values,
+            )
+        )
+
+    return updated_calculations
+
+
+async def get_dashboard_summary_service(session: AsyncSession, user_id: int):
+    total_data = await get_dashboard_summary_repository(session, user_id)
+
+    return {
+        "total_offers": total_data["total_offers"],
+        "offers_status": {
+            "pendente": total_data["pendente"],
+            "processada": total_data["processada"],
+            "sucesso": total_data["sucesso"],
+            "encerrada": total_data["encerrada"],
+        },
+        "total_success_offers_value": total_data["total_success_offers_value"],
+        "total_pending_offers_value": total_data["total_pending_offers_value"],
+    }
+
+
+async def get_monthly_dashboard_data_service(session: AsyncSession, user_id: int):
+    monthly_data = await get_monthly_dashboard_data_repository(session, user_id)
+
+    labels = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    datasets = [
+        {"label": "Processada", "color": "primary", "data": monthly_data["processada"]},
+        {"label": "Sucesso", "color": "success", "data": monthly_data["sucesso"]},
+        {"label": "Pendente", "color": "warning", "data": monthly_data["pendente"]},
+        {"label": "Encerrada", "color": "secondary", "data": monthly_data["encerrada"]},
+    ]
+
+    return {"labels": labels, "datasets": datasets}
+
+
+async def get_recovered_and_pending_service(session: AsyncSession, user_id: int):
+    monthly_data = await get_recovered_and_pending_repository(session, user_id)
+
+    labels = [
+        "Jan",
+        "Feb",
+        "Mar",
+        "Apr",
+        "May",
+        "Jun",
+        "Jul",
+        "Aug",
+        "Sep",
+        "Oct",
+        "Nov",
+        "Dec",
+    ]
+    datasets = [
+        {"label": "Recuperado", "color": "success", "data": monthly_data["success"]},
+        {"label": "Pendente", "color": "warning", "data": monthly_data["pending"]},
+    ]
+
+    return {"labels": labels, "datasets": datasets}

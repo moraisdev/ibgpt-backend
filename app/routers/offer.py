@@ -8,9 +8,19 @@ from app.services.offer import (
     add_documents_to_offer_service,
     generate_ia_response_service,
     generate_pdf_service,
-    get_all_offers_service
+    get_all_offers_service,
+    update_calculations_service,
+    get_dashboard_summary_service,
+    get_monthly_dashboard_data_service,
+    get_recovered_and_pending_service,
 )
-from app.schemas.offer import OfferCreate, OfferResponse, OfferUpdate, FineTuneResponse
+from app.schemas.offer import (
+    OfferCreate,
+    OfferResponse,
+    OfferUpdate,
+    FineTuneResponse,
+    InssSynthesizedCalculationUpdate,
+)
 from typing import List
 from fastapi.responses import FileResponse
 from app.models.user import User
@@ -141,6 +151,7 @@ async def generate_pdf(
             detail=f"Erro ao gerar o PDF: {str(e)}",
         )
 
+
 @router.get(
     "/",
     response_model=List[OfferResponse],
@@ -158,4 +169,74 @@ async def get_all_offers(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao buscar as ofertas: {str(e)}",
+        )
+
+
+@router.put("/update-calculations/{offer_id}", status_code=status.HTTP_200_OK)
+async def update_calculations(
+    offer_id: int,
+    calculations: List[InssSynthesizedCalculationUpdate],
+    session: AsyncSession = Depends(get_async_session),
+):
+    try:
+        updated_calculations = await update_calculations_service(
+            session, offer_id, calculations
+        )
+        return {
+            "message": "Cálculos atualizados com sucesso!",
+            "calculations": updated_calculations,
+        }
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao atualizar os cálculos: {str(e)}",
+        )
+
+
+@router.get("/dashboard", status_code=status.HTTP_200_OK)
+async def get_dashboard_data(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        dashboard_data = await get_dashboard_summary_service(session, current_user.id)
+        return dashboard_data
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar dados do dashboard: {str(e)}",
+        )
+
+
+@router.get("/dashboard/monthly", status_code=status.HTTP_200_OK)
+async def get_monthly_dashboard_data(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        monthly_data = await get_monthly_dashboard_data_service(
+            session, current_user.id
+        )
+        return monthly_data
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar dados mensais do dashboard: {str(e)}",
+        )
+
+
+@router.get("/dashboard/recovered-and-pending", status_code=status.HTTP_200_OK)
+async def get_recovered_and_pending(
+    session: AsyncSession = Depends(get_async_session),
+    current_user: User = Depends(get_current_user),
+):
+    try:
+        data = await get_recovered_and_pending_service(session, current_user.id)
+        return data
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Erro ao buscar os valores do gráfico: {str(e)}",
         )

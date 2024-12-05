@@ -3,7 +3,16 @@ from typing import Optional, List, Dict
 from datetime import datetime
 from app.schemas.customer import CustomerResponse
 
+
 class InssSynthesizedCalculation(BaseModel):
+    description: str
+    values: dict
+
+    class Config:
+        orm_mode = True
+
+
+class InssSynthesizedCalculationUpdate(BaseModel):
     description: str
     values: dict
 
