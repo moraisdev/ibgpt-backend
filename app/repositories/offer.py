@@ -110,7 +110,9 @@ async def get_dashboard_summary_repository(session: AsyncSession, user_id: int):
             func.sum(
                 case(
                     (
-                        (Offer.status == "pendente") | (Offer.status == "processada"),
+                        (Offer.status == "pendente")
+                        | (Offer.status == "processada")
+                        | (Offer.status == "validada"),
                         Offer.calculated_value,
                     ),
                     else_=0,
@@ -120,6 +122,7 @@ async def get_dashboard_summary_repository(session: AsyncSession, user_id: int):
             func.count(case((Offer.status == "processada", 1))).label("processada"),
             func.count(case((Offer.status == "sucesso", 1))).label("sucesso"),
             func.count(case((Offer.status == "encerrada", 1))).label("encerrada"),
+            func.count(case((Offer.status == "validada", 1))).label("validada"),
         )
         .join(Offer.customer)
         .where(Offer.customer.has(user_id=user_id))
@@ -136,6 +139,7 @@ async def get_monthly_dashboard_data_repository(session: AsyncSession, user_id: 
             func.count(case((Offer.status == "processada", 1))).label("processada"),
             func.count(case((Offer.status == "sucesso", 1))).label("sucesso"),
             func.count(case((Offer.status == "encerrada", 1))).label("encerrada"),
+            func.count(case((Offer.status == "validada", 1))).label("validada"),
         )
         .join(Offer.customer)
         .where(Offer.customer.has(user_id=user_id))
@@ -145,17 +149,16 @@ async def get_monthly_dashboard_data_repository(session: AsyncSession, user_id: 
 
     monthly_data = {
         status: [0] * 12
-        for status in ["pendente", "processada", "sucesso", "encerrada"]
+        for status in ["pendente", "processada", "sucesso", "encerrada", "validada"]
     }
 
     for row in query.fetchall():
         row_mapping = row._mapping
         month_index = int(row_mapping["month"]) - 1
-        for status in ["pendente", "processada", "sucesso", "encerrada"]:
+        for status in ["pendente", "processada", "sucesso", "encerrada", "validada"]:
             monthly_data[status][month_index] = row_mapping[status]
 
     return monthly_data
-
 
 async def get_recovered_and_pending_repository(session: AsyncSession, user_id: int):
     query = await session.execute(
@@ -167,7 +170,9 @@ async def get_recovered_and_pending_repository(session: AsyncSession, user_id: i
             func.sum(
                 case(
                     (
-                        (Offer.status == "pendente") | (Offer.status == "processada"),
+                        (Offer.status == "pendente")
+                        | (Offer.status == "processada")
+                        | (Offer.status == "validada"),
                         Offer.calculated_value,
                     ),
                     else_=0,

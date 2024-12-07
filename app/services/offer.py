@@ -223,7 +223,6 @@ async def update_calculations_service(
 
     return updated_calculations
 
-
 async def get_dashboard_summary_service(session: AsyncSession, user_id: int):
     total_data = await get_dashboard_summary_repository(session, user_id)
 
@@ -234,6 +233,7 @@ async def get_dashboard_summary_service(session: AsyncSession, user_id: int):
             "processada": total_data["processada"],
             "sucesso": total_data["sucesso"],
             "encerrada": total_data["encerrada"],
+            "validada": total_data["validada"],
         },
         "total_success_offers_value": total_data["total_success_offers_value"],
         "total_pending_offers_value": total_data["total_pending_offers_value"],
@@ -262,6 +262,7 @@ async def get_monthly_dashboard_data_service(session: AsyncSession, user_id: int
         {"label": "Sucesso", "color": "success", "data": monthly_data["sucesso"]},
         {"label": "Pendente", "color": "warning", "data": monthly_data["pendente"]},
         {"label": "Encerrada", "color": "secondary", "data": monthly_data["encerrada"]},
+        {"label": "Validada", "color": "dark", "data": monthly_data["validada"]},
     ]
 
     return {"labels": labels, "datasets": datasets}
