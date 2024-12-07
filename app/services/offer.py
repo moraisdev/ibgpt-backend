@@ -290,3 +290,14 @@ async def get_recovered_and_pending_service(session: AsyncSession, user_id: int)
     ]
 
     return {"labels": labels, "datasets": datasets}
+
+async def delete_offer_service(session: AsyncSession, offer_id: int):
+    offer = await get_offer_by_id(session, offer_id)
+    if not offer:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Oferta não encontrada.",
+        )
+
+    await session.delete(offer)
+    await session.commit()

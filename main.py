@@ -16,6 +16,7 @@ from app.routers.auth import router as auth_router
 from app.routers.customer import router as customer_router
 from app.routers.user import router as user_router
 from app.routers.offer import router as offer_router
+from app.middleware.standardize_middleware import StandardizeMiddleware
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -42,6 +43,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 
 app = FastAPI(lifespan=lifespan)
+app.add_middleware(StandardizeMiddleware)
 
 app.add_middleware(
     CORSMiddleware,

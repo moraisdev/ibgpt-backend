@@ -9,17 +9,14 @@ from sqlalchemy import delete, func, case, extract
 
 
 async def save_offer(session: AsyncSession, offer: Offer) -> Offer:
-    if not session.in_transaction():
-        async with session.begin():
-            session.add(offer)
-            await session.flush()
-            await session.refresh(offer)
-    else:
+    try:
         session.add(offer)
-        await session.flush()
+        await session.commit()
         await session.refresh(offer)
-
-    return offer
+        return offer
+    except Exception as e:
+        await session.rollback()
+        raise e
 
 
 async def get_offer_by_id(session: AsyncSession, offer_id: int) -> Offer:
