@@ -7,7 +7,13 @@ from app.services.auth import (
     register_user,
     refresh_access_token_service,
 )
-from app.schemas.auth import UserCreate, UserResponse, TokenResponse, LoginForm
+from app.schemas.auth import (
+    UserCreate,
+    UserResponse,
+    TokenResponse,
+    LoginForm,
+    RefreshTokenRequest,
+)
 from app.config.config import settings
 from datetime import timedelta
 from app.repositories.auth import update_password
@@ -65,8 +71,8 @@ async def login_for_access_token(
 
 
 @router.post("/refresh", response_model=TokenResponse)
-async def refresh_access_token_endpoint(refresh_token: str):
-    return await refresh_access_token_service(refresh_token)
+async def refresh_access_token_endpoint(request: RefreshTokenRequest):
+    return await refresh_access_token_service(request.refresh_token)
 
 
 @router.post("/reset-password")

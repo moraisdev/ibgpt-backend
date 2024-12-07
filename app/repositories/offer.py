@@ -160,6 +160,7 @@ async def get_monthly_dashboard_data_repository(session: AsyncSession, user_id: 
 
     return monthly_data
 
+
 async def get_recovered_and_pending_repository(session: AsyncSession, user_id: int):
     query = await session.execute(
         select(

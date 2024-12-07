@@ -60,7 +60,17 @@ async def refresh_access_token_service(refresh_token: str) -> dict:
         access_token = create_access_token(
             data={"sub": email}, expires_delta=access_token_expires
         )
-        return {"access_token": access_token, "token_type": "bearer"}
+
+        refresh_token_expires = timedelta(days=settings.REFRESH_TOKEN_EXPIRE_DAYS)
+        new_refresh_token = create_access_token(
+            data={"sub": email}, expires_delta=refresh_token_expires
+        )
+
+        return {
+            "access_token": access_token,
+            "refresh_token": new_refresh_token,
+            "token_type": "bearer",
+        }
     except ExpiredSignatureError:
         raise HTTPException(status_code=401, detail="Refresh token expirado.")
     except JWTError:

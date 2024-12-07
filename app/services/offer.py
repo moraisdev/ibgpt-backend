@@ -223,6 +223,7 @@ async def update_calculations_service(
 
     return updated_calculations
 
+
 async def get_dashboard_summary_service(session: AsyncSession, user_id: int):
     total_data = await get_dashboard_summary_repository(session, user_id)
 
@@ -291,6 +292,7 @@ async def get_recovered_and_pending_service(session: AsyncSession, user_id: int)
     ]
 
     return {"labels": labels, "datasets": datasets}
+
 
 async def delete_offer_service(session: AsyncSession, offer_id: int):
     offer = await get_offer_by_id(session, offer_id)

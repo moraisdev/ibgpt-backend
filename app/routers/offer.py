@@ -13,7 +13,7 @@ from app.services.offer import (
     get_dashboard_summary_service,
     get_monthly_dashboard_data_service,
     get_recovered_and_pending_service,
-    delete_offer_service
+    delete_offer_service,
 )
 from app.schemas.offer import (
     OfferCreate,
@@ -241,6 +241,7 @@ async def get_recovered_and_pending(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Erro ao buscar os valores do gráfico: {str(e)}",
         )
+
 
 @router.delete("/{offer_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_offer(
