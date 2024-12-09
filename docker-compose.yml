@@ -36,5 +36,6 @@ volumes:
   db_data:
 
 networks:
-  agente_network:
-    driver: bridge
+  default:
+    name: agente_network
+    external: true
