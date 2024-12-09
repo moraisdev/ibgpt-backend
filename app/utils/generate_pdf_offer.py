@@ -17,24 +17,24 @@ def render_offer_to_html(offer):
         "calculations": [
             {
                 "description": calc.description,
-                "BaseCalculoINSS": (
-                    f"{calc.values['BaseCalculoINSS']:.2f}".replace(".", ",")
-                    if calc.values.get("BaseCalculoINSS")
+                "basecalculoinss": (
+                    f"{calc.values['basecalculoinss']:.2f}".replace(".", ",")
+                    if calc.values.get("basecalculoinss")
                     else "0,00"
                 ),
-                "CreditosAuditados": (
-                    f"{calc.values['CreditosAuditados']:.2f}".replace(".", ",")
-                    if calc.values.get("CreditosAuditados")
+                "creditosauditados": (
+                    f"{calc.values['creditosauditados']:.2f}".replace(".", ",")
+                    if calc.values.get("creditosauditados")
                     else "0,00"
                 ),
-                "Juros": (
-                    f"{calc.values['Juros']:.2f}".replace(".", ",")
-                    if calc.values.get("Juros")
+                "juros": (
+                    f"{calc.values['juros']:.2f}".replace(".", ",")
+                    if calc.values.get("juros")
                     else "0,00"
                 ),
-                "ValorTotal": (
-                    f"{calc.values['ValorTotal']:.2f}".replace(".", ",")
-                    if calc.values.get("ValorTotal")
+                "valortotal": ( 
+                    f"{calc.values['valortotal']:.2f}".replace(".", ",")
+                    if calc.values.get("valortotal")
                     else "0,00"
                 ),
             }

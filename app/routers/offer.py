@@ -94,12 +94,9 @@ async def add_and_process_documents(
     session: AsyncSession = Depends(get_async_session),
 ):
     try:
-        processed_documents = await add_documents_to_offer_service(
-            session, offer_id, files
-        )
+        await add_documents_to_offer_service( session, offer_id, files )
         return {
-            "message": "Documentos processados com sucesso!",
-            "documents": processed_documents,
+            "message": "Documentos processados com sucesso!"
         }
     except HTTPException as e:
         raise e

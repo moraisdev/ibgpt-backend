@@ -1,6 +1,6 @@
 import json
 from starlette.types import ASGIApp, Receive, Scope, Send
-
+from starlette.datastructures import Headers
 
 class StandardizeMiddleware:
     def __init__(self, app: ASGIApp):
@@ -18,21 +18,22 @@ class StandardizeMiddleware:
 
     async def __call__(self, scope: Scope, receive: Receive, send: Send):
         if scope["type"] == "http":
-            method = scope["method"].upper()
+            headers = Headers(scope=scope)
+            content_type = headers.get("content-type", "")
 
-            async def receive_wrapper():
-                message = await receive()
-                if message.get("type") == "http.request" and message.get("body"):
-                    original_body = message["body"].decode("utf-8")
-                    try:
-                        parsed_body = json.loads(original_body)
-                        lowercase_body = self._convert_to_lowercase(parsed_body)
-                        new_body = json.dumps(lowercase_body).encode("utf-8")
-                        message["body"] = new_body
+            if "application/json" in content_type.lower():
+                async def receive_wrapper():
+                    message = await receive()
+                    if message.get("type") == "http.request" and message.get("body"):
+                        try:
+                            original_body = message["body"].decode("utf-8")
+                            parsed_body = json.loads(original_body)
+                            lowercase_body = self._convert_to_lowercase(parsed_body)
+                            new_body = json.dumps(lowercase_body).encode("utf-8")
+                            message["body"] = new_body
 
-                        headers_dict = dict(scope["headers"])
-                        if b"content-length" in headers_dict:
                             new_length = len(new_body)
+
                             scope["headers"] = [
                                 (k, v)
                                 for (k, v) in scope["headers"]
@@ -41,11 +42,13 @@ class StandardizeMiddleware:
                             scope["headers"].append(
                                 (b"content-length", str(new_length).encode("latin1"))
                             )
-                    except json.JSONDecodeError:
-                        pass
-                return message
+                        except json.JSONDecodeError:
+                            pass
+                    return message
 
-            await self.app(scope, receive_wrapper, send)
+                await self.app(scope, receive_wrapper, send)
+            else:
+                await self.app(scope, receive, send)
         else:
             await self.app(scope, receive, send)
 

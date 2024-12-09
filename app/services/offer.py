@@ -12,7 +12,6 @@ from app.repositories.offer import (
     get_recovered_and_pending_repository,
 )
 from typing import List
-from fastapi import UploadFile
 from app.models.offer import Offer
 from app.models.offer_document import OfferDocument
 from app.models.calculations import InssSynthesizedCalculation
@@ -20,7 +19,7 @@ from app.schemas.offer import (
     InssSynthesizedCalculationResponse,
     InssSynthesizedCalculationUpdate,
 )
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile
 from app.services.extract_documents import extract_documents
 from app.services.openai import prepare_prompt, use_fine_tuned_model
 from sqlalchemy import delete
@@ -63,6 +62,7 @@ async def get_offer_resume_service(session: AsyncSession, offer_id: int):
 async def add_documents_to_offer_service(
     session: AsyncSession, offer_id: int, files: List[UploadFile]
 ):
+
     offer = await get_offer_by_id(session, offer_id)
     if not offer:
         raise HTTPException(
@@ -73,21 +73,28 @@ async def add_documents_to_offer_service(
     processed_documents = []
 
     for file in files:
-        content = await file.read()
+        try:
 
-        processed_text = extract_documents(content)
+            content = await file.read()
 
-        document = OfferDocument(
-            offer_id=offer_id,
-            filename=file.filename,
-            content=content,
-            processed_text=processed_text,
-        )
+            processed_text = extract_documents(content)
 
-        session.add(document)
-        processed_documents.append(
-            {"filename": file.filename, "processed_text": processed_text}
-        )
+            document = OfferDocument(
+                offer_id=offer_id,
+                filename=file.filename,
+                content=content,
+                processed_text=processed_text,
+            )
+
+            session.add(document)
+            processed_documents.append(
+                {"filename": file.filename, "processed_text": processed_text}
+            )
+        except Exception as e:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Erro ao processar o arquivo {file.filename}: {str(e)}"
+            )
 
     await session.commit()
 

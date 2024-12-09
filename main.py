@@ -43,7 +43,7 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 
 app = FastAPI(lifespan=lifespan)
-app.add_middleware(StandardizeMiddleware)
+#app.add_middleware(StandardizeMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
