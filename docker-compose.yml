@@ -13,6 +13,8 @@ services:
       - db_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+    networks:
+      - agente_network
 
   backend:
     build:
@@ -27,6 +29,12 @@ services:
     environment:
       DATABASE_URL: "postgresql+asyncpg://adminagent:Jb3IFxYzHcarFqXv@db:5432/agente_backend_db"
     command: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
+    networks:
+      - agente_network
 
 volumes:
   db_data:
+
+networks:
+  agente_network:
+    driver: bridge
