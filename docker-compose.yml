@@ -36,6 +36,5 @@ volumes:
   db_data:
 
 networks:
-  default:
-    name: agente_network
+  agente_network:
     external: true
