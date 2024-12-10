@@ -47,12 +47,18 @@ app = FastAPI(lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
+    allow_origins=[
+        "http://localhost:3000",
+        "http://localhost",
+        "https://ibgpt-system.com.br",
+        "http://ibgpt-system.com.br",
+        "https://api.ibgpt-system.com.br",
+        "http://api.ibgpt-system.com.br",
+    ],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
 
 def custom_openapi():
     if app.openapi_schema:
