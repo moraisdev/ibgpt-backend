@@ -37,4 +37,5 @@ COPY . .
 ENV PYTHONPATH=/app
 
 # Comando para aguardar o banco de dados e iniciar o backend
-CMD ["sh", "-c", "./wait-for-it.sh db:5432 -- alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"]
+#CMD ["sh", "-c", "./wait-for-it.sh db:5432 -- alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"]
+CMD ["sh", "-c", "./wait-for-it.sh db:5432 -- alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000 --proxy-headers --forwarded-allow-ips '127.0.0.1'"]
