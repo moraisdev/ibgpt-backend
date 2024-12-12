@@ -43,15 +43,16 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 
 app = FastAPI(lifespan=lifespan)
-#app.add_middleware(StandardizeMiddleware)
+# app.add_middleware(StandardizeMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
-    allow_origins=["*"]
+    allow_origins=["*"],
 )
+
 
 def custom_openapi():
     if app.openapi_schema:

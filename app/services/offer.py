@@ -28,6 +28,8 @@ from app.utils.generate_pdf_offer import render_offer_to_html
 from weasyprint import HTML
 from app.schemas.offer import OfferResponse
 
+from app.config.config import settings
+
 
 async def create_or_update_offer_service(session: AsyncSession, offer_data: dict):
 
@@ -93,7 +95,7 @@ async def add_documents_to_offer_service(
         except Exception as e:
             raise HTTPException(
                 status_code=400,
-                detail=f"Erro ao processar o arquivo {file.filename}: {str(e)}"
+                detail=f"Erro ao processar o arquivo {file.filename}: {str(e)}",
             )
 
     await session.commit()
@@ -130,7 +132,14 @@ async def generate_ia_response_service(session: AsyncSession, offer_id: int) -> 
 
     prompt = await prepare_prompt(offer)
 
-    fine_tune_response = await use_fine_tuned_model(prompt)
+    if offer.documents:
+        fine_tune_response = await use_fine_tuned_model(
+            prompt, model=settings.FINE_TUNE_MODEL_DOC
+        )
+    else:
+        fine_tune_response = await use_fine_tuned_model(
+            prompt, model=settings.FINE_TUNE_MODEL
+        )
 
     result_data = process_fine_tune_response(fine_tune_response)
 

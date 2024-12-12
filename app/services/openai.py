@@ -1,11 +1,9 @@
 from app.config.config import settings
-
 from openai import AsyncOpenAI
 from app.models.offer import Offer
 import json
 
 aclient = AsyncOpenAI(api_key=settings.OPENAI_API_KEY)
-model = settings.FINE_TUNE_MODEL
 PROMPT_PATH = "app/prompts/offer_prompt.txt"
 
 
@@ -18,16 +16,14 @@ def extract_json_from_response(ai_message: str) -> str:
     import re
 
     ai_message_clean = ai_message.strip()
-
     ai_message_clean = re.sub(
         r"^```(?:json)?\s*", "", ai_message_clean, flags=re.IGNORECASE
     )
     ai_message_clean = re.sub(r"\s*```$", "", ai_message_clean)
-
     return ai_message_clean.strip()
 
 
-async def use_fine_tuned_model(prompt: str) -> dict:
+async def use_fine_tuned_model(prompt: str, model: str) -> dict:
     try:
         system_prompt_content = load_prompt(PROMPT_PATH)
 
@@ -43,7 +39,6 @@ async def use_fine_tuned_model(prompt: str) -> dict:
         print(f"AI message: {ai_message}")
 
         json_str = extract_json_from_response(ai_message)
-
         offer_data = json.loads(json_str)
         return offer_data
 

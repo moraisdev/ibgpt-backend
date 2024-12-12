@@ -32,7 +32,7 @@ def render_offer_to_html(offer):
                     if calc.values.get("juros")
                     else "0,00"
                 ),
-                "valortotal": ( 
+                "valortotal": (
                     f"{calc.values['valortotal']:.2f}".replace(".", ",")
                     if calc.values.get("valortotal")
                     else "0,00"

@@ -2,6 +2,7 @@ import json
 from starlette.types import ASGIApp, Receive, Scope, Send
 from starlette.datastructures import Headers
 
+
 class StandardizeMiddleware:
     def __init__(self, app: ASGIApp):
         self.app = app
@@ -22,6 +23,7 @@ class StandardizeMiddleware:
             content_type = headers.get("content-type", "")
 
             if "application/json" in content_type.lower():
+
                 async def receive_wrapper():
                     message = await receive()
                     if message.get("type") == "http.request" and message.get("body"):
