@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, text, ForeignKey
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, text, ForeignKey, UniqueConstraint
 from sqlalchemy.orm import relationship
 from app.models.base import Base
 
@@ -10,18 +10,14 @@ class Customer(Base):
     user_id = Column(Integer, ForeignKey("users.id"), nullable=False)
     company_representative_name = Column(String(100), index=True, nullable=False)
     company_representative_last_name = Column(String(100), index=True, nullable=False)
-    company_representative_email = Column(
-        String(255), unique=True, index=True, nullable=False
-    )
-    company_representative_phone_number = Column(
-        String(20), unique=True, index=True, nullable=False
-    )
+    company_representative_email = Column(String(255), index=True, nullable=False)
+    company_representative_phone_number = Column(String(20), index=True, nullable=False)
     company_name = Column(String(255), index=True, nullable=False)
-    company_email = Column(String(255), unique=True, index=True, nullable=False)
-    company_phone_number = Column(String(20), unique=True, index=True, nullable=False)
+    company_email = Column(String(255), index=True, nullable=False)
+    company_phone_number = Column(String(20), index=True, nullable=False)
     company_website = Column(String(255), nullable=False)
     company_activity_sector = Column(String(100), nullable=False)
-    company_cnpj = Column(String(14), index=True, nullable=False, unique=True)
+    company_cnpj = Column(String(14), index=True, nullable=False)
     company_address_street = Column(String(255), nullable=False)
     company_address_number = Column(String(255), nullable=False)
     company_address_complement = Column(String(255), nullable=True)
@@ -46,3 +42,11 @@ class Customer(Base):
 
     user = relationship("User", back_populates="customers")
     offers = relationship("Offer", back_populates="customer")
+
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id", 
+            "company_cnpj", 
+            name="uq_user_customer"
+        ),
+    )
