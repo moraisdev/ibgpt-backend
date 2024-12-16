@@ -10,6 +10,8 @@ from app.repositories.offer import (
     get_dashboard_summary_repository,
     get_monthly_dashboard_data_repository,
     get_recovered_and_pending_repository,
+    get_documents_by_offer_id,
+    get_document_by_id,
 )
 from typing import List
 from app.models.offer import Offer
@@ -59,6 +61,22 @@ async def get_offer_resume_service(session: AsyncSession, offer_id: int):
     if not offer:
         raise HTTPException(status_code=404, detail="Oferta não encontrada.")
     return offer
+
+
+async def get_documents_by_offer_id_service(session: AsyncSession, offer_id: int):
+    documents = await get_documents_by_offer_id(session, offer_id)
+    if not documents:
+        raise HTTPException(
+            status_code=404, detail="Nenhum documento encontrado para essa oferta."
+        )
+    return [{"id": doc[0], "filename": doc[1]} for doc in documents]
+
+
+async def download_document_service(session: AsyncSession, document_id: int):
+    document = await get_document_by_id(session, document_id)
+    if not document:
+        raise HTTPException(status_code=404, detail="Documento não encontrado.")
+    return document
 
 
 async def add_documents_to_offer_service(

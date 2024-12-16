@@ -1,4 +1,13 @@
-from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, text, ForeignKey, UniqueConstraint
+from sqlalchemy import (
+    Column,
+    Integer,
+    String,
+    Boolean,
+    TIMESTAMP,
+    text,
+    ForeignKey,
+    UniqueConstraint,
+)
 from sqlalchemy.orm import relationship
 from app.models.base import Base
 
@@ -44,9 +53,5 @@ class Customer(Base):
     offers = relationship("Offer", back_populates="customer")
 
     __table_args__ = (
-        UniqueConstraint(
-            "user_id", 
-            "company_cnpj", 
-            name="uq_user_customer"
-        ),
+        UniqueConstraint("user_id", "company_cnpj", name="uq_user_customer"),
     )

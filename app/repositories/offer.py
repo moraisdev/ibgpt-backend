@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models.offer import Offer
+from app.models.offer_document import OfferDocument
 from sqlalchemy.orm import selectinload
 from typing import List
 from app.schemas.offer import OfferResponse
@@ -17,6 +18,22 @@ async def save_offer(session: AsyncSession, offer: Offer) -> Offer:
     except Exception as e:
         await session.rollback()
         raise e
+
+
+async def get_documents_by_offer_id(session: AsyncSession, offer_id: int):
+    stmt = select(OfferDocument.id, OfferDocument.filename).where(
+        OfferDocument.offer_id == offer_id, OfferDocument.deleted_at.is_(None)
+    )
+    result = await session.execute(stmt)
+    return result.all()
+
+
+async def get_document_by_id(session: AsyncSession, document_id: int):
+    stmt = select(OfferDocument).where(
+        OfferDocument.id == document_id, OfferDocument.deleted_at.is_(None)
+    )
+    result = await session.execute(stmt)
+    return result.scalar_one_or_none()
 
 
 async def get_offer_by_id(session: AsyncSession, offer_id: int) -> Offer:

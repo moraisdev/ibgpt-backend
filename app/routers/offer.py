@@ -14,6 +14,8 @@ from app.services.offer import (
     get_monthly_dashboard_data_service,
     get_recovered_and_pending_service,
     delete_offer_service,
+    get_documents_by_offer_id_service,
+    download_document_service,
 )
 from app.schemas.offer import (
     OfferCreate,
@@ -26,6 +28,8 @@ from typing import List
 from fastapi.responses import FileResponse
 from app.models.user import User
 from app.services.auth import get_current_user
+from starlette.responses import StreamingResponse
+import mimetypes
 
 router = APIRouter()
 
@@ -101,6 +105,44 @@ async def add_and_process_documents(
     except Exception as e:
         raise HTTPException(
             status_code=500, detail=f"Erro ao adicionar documentos: {e}"
+        )
+
+
+@router.get("/documents/{offer_id}/list", response_model=List[dict])
+async def list_documents_by_offer(
+    offer_id: int, session: AsyncSession = Depends(get_async_session)
+):
+    try:
+        docs = await get_documents_by_offer_id_service(session, offer_id)
+        return docs
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Erro ao listar documentos: {e}")
+
+
+@router.get("/documents/download/{document_id}")
+async def download_document(
+    document_id: int, session: AsyncSession = Depends(get_async_session)
+):
+    try:
+        document = await download_document_service(session, document_id)
+        mime_type, _ = mimetypes.guess_type(document.filename)
+        if not mime_type:
+            mime_type = "application/octet-stream"
+
+        return StreamingResponse(
+            iter([document.content]),
+            media_type=mime_type,
+            headers={
+                "Content-Disposition": f'attachment; filename="{document.filename}"'
+            },
+        )
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(
+            status_code=500, detail=f"Erro ao realizar download do documento: {e}"
         )
 
 
