@@ -15,9 +15,13 @@ config = context.config
 # Configuração de logging
 fileConfig(config.config_file_name)
 
-# Importa o metadata do SQLAlchemy
-from app.models.base import Base  # Ajuste para importar de base.py
-from app.models import *  # Importa todos os modelos para que sejam detectados
+from app.models.base import Base
+from app.models.role import Role
+from app.models.user import User
+from app.models.customer import Customer
+from app.models.offer import Offer
+from app.models.offer_document import OfferDocument
+from app.models.calculations import InssSynthesizedCalculation
 
 target_metadata = Base.metadata
 
