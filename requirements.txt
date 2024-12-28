@@ -130,3 +130,5 @@ pdfplumber
 tabulate
 weasyprint
 jinja2
+tiktoken
+qdrant-client

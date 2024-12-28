@@ -1,13 +1,4 @@
-from sqlalchemy import (
-    Column,
-    Integer,
-    String,
-    Boolean,
-    TIMESTAMP,
-    ForeignKey,
-    func,
-    text,
-)
+from sqlalchemy import Column, Integer, String, Boolean, TIMESTAMP, ForeignKey, text
 from sqlalchemy.orm import relationship
 from app.models.base import Base
 
@@ -28,10 +19,11 @@ class User(Base):
     role_id = Column(
         Integer, ForeignKey("roles.id"), nullable=False, server_default=text("3")
     )
-
     role = relationship("Role", back_populates="users")
 
     is_active = Column(Boolean, nullable=True, default=True)
+    subscription_status = Column(String(50), nullable=True)
+
     created_at = Column(
         TIMESTAMP(timezone=True),
         server_default=text("timezone('America/Sao_Paulo', now())"),
@@ -43,4 +35,6 @@ class User(Base):
         onupdate=text("timezone('America/Sao_Paulo', now())"),
         nullable=False,
     )
+
     customers = relationship("Customer", back_populates="user")
+    chats = relationship("Chat", back_populates="user")

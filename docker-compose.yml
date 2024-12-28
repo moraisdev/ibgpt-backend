@@ -16,6 +16,18 @@ services:
     networks:
       - agente_network
 
+  qdrant:
+    image: qdrant/qdrant:v1.4.0
+    container_name: agente-qdrant
+    restart: unless-stopped
+    volumes:
+      - qdrant_storage:/qdrant/storage
+    ports:
+      - "6333:6333"  # HTTP
+      - "6334:6334"  # gRPC
+    networks:
+      - agente_network
+
   backend:
     build:
       context: .
@@ -24,10 +36,13 @@ services:
     restart: always
     depends_on:
       - db
+      - qdrant
     ports:
       - "8000:8000"
     environment:
       DATABASE_URL: "postgresql+asyncpg://adminagent:Jb3IFxYzHcarFqXv@db:5432/agente_backend_db"
+      QDRANT_HOST: "qdrant"
+      QDRANT_PORT: "6333"
     volumes:
       - .:/app
     command: sh -c "alembic upgrade head && uvicorn main:app --host 0.0.0.0 --port 8000"
@@ -36,6 +51,7 @@ services:
 
 volumes:
   db_data:
+  qdrant_storage:
 
 networks:
   agente_network:

@@ -21,6 +21,7 @@ from app.services.auth import get_current_user
 from passlib.context import CryptContext
 from app.models.user import User
 from app.schemas.auth import ResetPasswordForm
+from sqlalchemy.exc import IntegrityError
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
 
@@ -34,6 +35,22 @@ async def register_user_endpoint(
     try:
         new_user = await register_user(session, user.dict())
         return new_user
+    except IntegrityError as exc:
+        await session.rollback()
+
+        error_msg = str(exc.orig).lower()
+
+        if "email" in error_msg:
+            detail_msg = "Este e-mail já foi cadastrado."
+        elif "phone" in error_msg:
+            detail_msg = "Este telefone já foi cadastrado."
+        elif "cnpj" in error_msg:
+            detail_msg = "Este CNPJ ou CPF já foi cadastrado."
+        else:
+            detail_msg = "Já existe um registro com esses dados."
+
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=detail_msg)
+
     except Exception as e:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,

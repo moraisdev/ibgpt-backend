@@ -16,6 +16,8 @@ from app.routers.auth import router as auth_router
 from app.routers.customer import router as customer_router
 from app.routers.user import router as user_router
 from app.routers.offer import router as offer_router
+from app.webhook.kirvano import router as kirvano_router
+from app.routers.chat import router as chat_router
 from app.middleware.standardize_middleware import StandardizeMiddleware
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
@@ -84,3 +86,5 @@ app.include_router(customer_router, prefix="/customers", tags=["Clientes"])
 app.include_router(location_router, prefix="/location", tags=["Localidade"])
 app.include_router(user_router, prefix="/users", tags=["Usuarios"])
 app.include_router(offer_router, prefix="/offers", tags=["Ofertas"])
+app.include_router(kirvano_router, prefix="/webhook", tags=["Webhooks"])
+app.include_router(chat_router, prefix="/ia", tags=["Chat IA"])
