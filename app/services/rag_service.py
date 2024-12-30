@@ -1,9 +1,8 @@
-# app/services/rag_service.py
-
 import os
+from datetime import datetime, timedelta
 from openai import OpenAI
 from qdrant_client import QdrantClient
-from qdrant_client.models import ScoredPoint
+from qdrant_client.models import ScoredPoint, Filter, FieldCondition, Range
 
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", "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"))
 
@@ -14,51 +13,68 @@ QDRANT_PORT = int(os.getenv("QDRANT_PORT", "6333"))
 EMBEDDING_MODEL = "text-embedding-ada-002"
 SCORE_THRESHOLD = 0.7
 
+qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
+
 def generate_embedding(text: str) -> list[float]:
-    """Gera embedding usando OpenAI (text-embedding-ada-002)."""
     response = client.embeddings.create(input=[text], model=EMBEDDING_MODEL)
     return response.data[0].embedding
 
-qdrant_client = QdrantClient(host=QDRANT_HOST, port=QDRANT_PORT)
-
-
 async def process_rag_query(question: str) -> str:
-    """
-    Tenta buscar contexto no Qdrant. Se achar algo relevante (score >= threshold), 
-    injeta no prompt. Caso contrário, chama GPT sem restrições (fallback).
-    """
-
     # 1) Gerar embedding da pergunta
     question_embedding = generate_embedding(question)
+    
+    # 2) Definindo data limite (ex.: últimos 30 dias)
+    recent_cutoff = datetime.now() - timedelta(days=30)
+    recent_cutoff_iso = recent_cutoff.isoformat()  # string no formato ISO
 
-    # 2) Buscar no Qdrant
-    search_result: list[ScoredPoint] = qdrant_client.search(
-        collection_name=QDRANT_COLLECTION,
-        query_vector=question_embedding,
-        limit=3,
-    )
+    # 3) Busca usando filtro de data_insercao >= recent_cutoff_iso
+    try:
+        search_result_recent: list[ScoredPoint] = qdrant_client.search(
+            collection_name=QDRANT_COLLECTION,
+            query_vector=question_embedding,
+            limit=3,
+            filter=Filter(
+                must=[
+                    FieldCondition(
+                        key="data_insercao",
+                        range=Range(gte=recent_cutoff_iso)
+                    )
+                ]
+            )
+        )
+    except Exception as e:
+        # Em caso de erro, podemos logar e seguir
+        search_result_recent = []
 
-    if not search_result:
-        # Fallback: sem resultados => chama GPT normal
-        return await call_gpt_fallback(question)
+    # 4) Se não achou nada OU o score do top for muito baixo, fallback:
+    if not search_result_recent or search_result_recent[0].score < SCORE_THRESHOLD:
+        # Tenta buscar sem filtro de data
+        search_result = qdrant_client.search(
+            collection_name=QDRANT_COLLECTION,
+            query_vector=question_embedding,
+            limit=3,
+        )
+        if not search_result:
+            # Fallback final: GPT sem contexto
+            return await call_gpt_fallback(question)
+        # Verifica score do resultado
+        if search_result[0].score < SCORE_THRESHOLD:
+            return await call_gpt_fallback(question)
+        # Monta contexto com os resultados
+        retrieved_chunks = [hit.payload["texto"] for hit in search_result]
+    else:
+        # Se achou resultado recente (e top_score >= threshold)
+        retrieved_chunks = [hit.payload["texto"] for hit in search_result_recent]
 
-    top_score = search_result[0].score
-    if top_score < SCORE_THRESHOLD:
-        # Fallback: menor que threshold => chama GPT normal
-        return await call_gpt_fallback(question)
-
-    # 3) Monta contexto
-    retrieved_chunks = [hit.payload["text"] for hit in search_result]
+    # 5) Monta contexto
     context = "\n\n".join(retrieved_chunks)
 
-    # 4) Monta prompt dizendo "use APENAS esse contexto"
-    # Mas se você quer que ele também possa usar conhecimento geral, não fale “APENAS” 
-    # ou use outra formulação. Exemplo:
+    # 6) Monta prompt e chama GPT
     user_message_content = f"""
     CONTEXTO:
     {context}
 
-    Você é um assistente especializado em questões tributárias,
+    Você é um assistente especializado em questões tributárias e contabilidade,
     mas também pode usar seu conhecimento geral. Se o CONTEXTO ajudar, use-o.
     Se não tiver nada no CONTEXTO, responda com seu próprio conhecimento.
 
@@ -67,7 +83,7 @@ async def process_rag_query(question: str) -> str:
 
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="chatgpt-4o-latest",
             messages=[
                 {
                     "role": "system",
@@ -97,11 +113,11 @@ async def call_gpt_fallback(question: str) -> str:
     """
     try:
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="chatgpt-4o-latest",
             messages=[
                 {
                     "role": "system",
-                    "content": "Você é um assistente amplo com conhecimento geral."
+                    "content": "Você é um assistente amplo com conhecimento em contabilidade e questões tributarias e questões gerais."
                 },
                 {
                     "role": "user",
@@ -113,12 +129,8 @@ async def call_gpt_fallback(question: str) -> str:
         return response.choices[0].message.content.strip()
     except Exception as e:
         raise e
-
-
 async def summarize_text(content: str) -> str:
-    """
-    Exemplo de função de sumarização (opcional).
-    """
+
     prompt = f"Por favor, faça um resumo breve do texto:\n\n{content}"
     try:
         response = client.chat.completions.create(

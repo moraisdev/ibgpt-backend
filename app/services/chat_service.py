@@ -1,5 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy import select, delete
+from sqlalchemy import select
 from app.models.chat import Chat
 from app.models.chat_message import ChatMessage
 from app.schemas.chat import ChatCreate
