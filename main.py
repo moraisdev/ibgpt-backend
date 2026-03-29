@@ -4,6 +4,8 @@ from fastapi.security import OAuth2PasswordBearer
 from fastapi.openapi.models import SecuritySchemeType
 from app.db.database import engine
 from app.models.base import Base
+from app.fiscal.models.base import FiscalBase
+from app.fiscal.db import get_engine as get_fiscal_engine
 import logging
 from typing import AsyncGenerator
 from fastapi.openapi.utils import get_openapi
@@ -19,6 +21,9 @@ from app.routers.offer import router as offer_router
 from app.webhook.kirvano import router as kirvano_router
 from app.routers.chat import router as chat_router
 from app.middleware.standardize_middleware import StandardizeMiddleware
+from app.fiscal.routers.empresas import router as fiscal_empresas_router
+from app.fiscal.routers.nfe import router as fiscal_nfe_router
+from app.fiscal.routers.sync import router as fiscal_sync_router
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -29,7 +34,11 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-    logger.info("Tabelas criadas com sucesso.")
+    logger.info("Tabelas ibgpt criadas com sucesso.")
+
+    fiscal_engine, _ = get_fiscal_engine()
+    FiscalBase.metadata.create_all(fiscal_engine)
+    logger.info("Tabelas fiscais criadas com sucesso.")
 
     session_generator = get_async_session()
     session = await session_generator.__anext__()
@@ -45,7 +54,6 @@ async def lifespan(app: FastAPI) -> AsyncGenerator:
 
 
 app = FastAPI(lifespan=lifespan)
-# app.add_middleware(StandardizeMiddleware)
 
 app.add_middleware(
     CORSMiddleware,
@@ -88,3 +96,6 @@ app.include_router(user_router, prefix="/users", tags=["Usuarios"])
 app.include_router(offer_router, prefix="/offers", tags=["Ofertas"])
 app.include_router(kirvano_router, prefix="/webhook", tags=["Webhooks"])
 app.include_router(chat_router, prefix="/ia", tags=["Chat IA"])
+app.include_router(fiscal_empresas_router, prefix="/fiscal", tags=["Fiscal - Empresas"])
+app.include_router(fiscal_nfe_router, prefix="/fiscal", tags=["Fiscal - NF-e"])
+app.include_router(fiscal_sync_router, prefix="/fiscal", tags=["Fiscal - Sync"])
